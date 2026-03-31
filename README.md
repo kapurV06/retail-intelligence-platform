@@ -1,4 +1,4 @@
-# 🛒 Retail Inventory Intelligence Platform
+# Retail Inventory Intelligence Platform
 
 > **Solving the $1.75 trillion global stockout crisis with end-to-end data analytics**
 
@@ -10,50 +10,18 @@
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
 Retailers globally lose **$1.75 trillion/year** to inventory mismanagement — stockouts that lose sales, and overstocks that tie up capital. Most companies have the data. They just can't act on it fast enough.
 
 This platform answers: **Which SKUs, in which stores, will stock out next — and what does it cost us?**
 
 **Quantified in this dataset:**
-- 💀 **₹623M lost** to stockouts across 18 months
-- 📦 **9.1% of all demand** goes unmet
-- 🔥 Top 10 SKUs account for **40% of all lost revenue**
+- **₹623M lost** to stockouts across 18 months
+- **9.1% of all demand** goes unmet
+- Top 10 SKUs account for **40% of all lost revenue**
 
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          DATA PIPELINE                                        │
-│                                                                               │
-│  Raw CSVs ──► Pandas EDA ──► SQLite ──► Azure SQL ──► Power BI Desktop      │
-│                    │                        │               │                 │
-│                    │                        │               ▼                 │
-│                    │                        │        Power BI Service         │
-│                    │                        │        (Scheduled Refresh)      │
-│                    ▼                        │               │                 │
-│             Analytics Cache ──────────────────────────────►│                 │
-│              (JSON/Blob)                    │               │                 │
-│                    │                        │               ▼                 │
-│                    ▼                        │        Power BI Embedded        │
-│              Streamlit App ◄────────────────┘               │                │
-│                    │                                         │                │
-│                    └──────────────────────────────────────► │                │
-│                                                             │                │
-│                    ┌──────────────────────────┐             │                │
-│                    │  Azure App Service       │◄────────────┘                │
-│                    │  (Docker Container)      │                               │
-│                    │  + GitHub Actions CI/CD  │                               │
-│                    └──────────────────────────┘                               │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📊 Tech Stack
+## Tech Stack
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
@@ -72,7 +40,7 @@ This platform answers: **Which SKUs, in which stores, will stock out next — an
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Local Development
 ```bash
@@ -109,44 +77,44 @@ git push origin main
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 retail-intelligence-platform/
 │
-├── app.py                          # Streamlit dashboard (6 pages)
-├── Dockerfile                      # Azure App Service container
+├── app.py                          
+├── Dockerfile                      
 ├── requirements.txt
 │
 ├── scripts/
-│   ├── generate_data.py            # Synthetic retail dataset (vectorized)
-│   ├── eda_analysis.py             # Pandas EDA pipeline
-│   ├── sql_analytics.py            # 6 advanced SQL queries
-│   ├── excel_report.py             # 7-sheet Excel workbook (openpyxl)
-│   └── run_all.py                  # Orchestrator
+│   ├── generate_data.py            
+│   ├── eda_analysis.py             
+│   ├── sql_analytics.py            
+│   ├── excel_report.py             
+│   └── run_all.py                  
 │
 ├── azure/
-│   ├── provision.sh                # Azure CLI infrastructure setup
-│   └── migrate_to_azure_sql.py     # SQLite → Azure SQL migration
+│   ├── provision.sh               
+│   └── migrate_to_azure_sql.py     
 │
 ├── powerbi/
-│   ├── dax_measures.dax            # All DAX measures (30+ KPIs)
-│   └── DATA_MODEL.md               # Star schema + setup guide
+│   ├── dax_measures.dax            
+│   └── DATA_MODEL.md               
 │
 ├── .github/
 │   └── workflows/
-│       └── azure-deploy.yml        # CI/CD: test → build → push → deploy
+│       └── azure-deploy.yml        
 │
-├── data/                           # Generated CSVs
+├── data/                           
 └── outputs/
-    ├── retail.db                   # SQLite database (indexes)
-    ├── analytics_cache.json        # Pre-computed analytics
-    └── Retail_Intelligence_Report.xlsx  # Excel report
+    ├── retail.db                   
+    ├── analytics_cache.json        
+    └── Retail_Intelligence_Report.xlsx  
 ```
 
 ---
 
-## 📈 Dashboard Pages
+## Dashboard Pages
 
 1. **Executive Overview** — Revenue trend, MoM growth, regional breakdown
 2. **Category Deep Dive** — Margin analysis, revenue vs loss scatter, weekday heatmap
@@ -157,33 +125,9 @@ retail-intelligence-platform/
 
 ---
 
-## 🔑 Key SQL Queries (Highlights)
-
-- **Revenue Recovery by Category** — CTE + `RANK() OVER (ORDER BY lost_revenue DESC)`
-- **Store ABC Analysis** — Running total with `SUM() OVER (ORDER BY revenue DESC)` + cumulative %
-- **Chronic Stockout SKUs** — Multi-condition `HAVING` + ABC class filter + window rank
-- **Region × Tier Revenue Matrix** — Multi-dimension `GROUP BY` with `JOIN`
-- **Weekday Heatmap** — `strftime('%w', date)` + CASE WHEN day mapping
-
----
-
 ## 💡 Business Impact
 
-If stockout rate is reduced from **9.1% → 4.5%** (industry benchmark):
+If stockout rate is reduced from **9.1% → 4.5%** :
 - **Annual revenue recovery: ~₹415M**
 - **Top 10 SKU fix: ~₹250M alone**
 - **ROI timeline: 3–6 months** (technology cost vs revenue gain)
-
----
-
-## 🤝 About This Project
-
-Built as a portfolio project demonstrating end-to-end data analytics capability:
-- Real-world business problem with quantifiable impact
-- Production-grade code (modular, vectorized, documented)
-- Full deployment pipeline (not just notebooks)
-- Industry-standard tools used in actual enterprise BI teams
-
----
-
-*Dataset is synthetic but statistically realistic. Architecture mirrors production retail analytics stacks at companies like Walmart, Amazon, Reliance Retail.*
