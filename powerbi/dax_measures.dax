@@ -1,0 +1,248 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  RETAIL INTELLIGENCE PLATFORM — DAX MEASURES                       ║
+// ║  Paste these into Power BI Desktop (Modeling → New Measure)        ║
+// ║  Data Model: fact_sales + dim_products + dim_stores + dim_date     ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+
+// ════════════════════════════════════════════════════════════════════════
+// TABLE: _Measures (create an empty table called _Measures to group them)
+// ════════════════════════════════════════════════════════════════════════
+
+// ── CORE KPIs ─────────────────────────────────────────────────────────────────
+
+Total Revenue =
+SUM(fact_sales[revenue])
+
+Lost Revenue =
+SUM(fact_sales[lost_revenue])
+
+Gross Profit =
+SUM(fact_sales[gross_profit])
+
+Total COGS =
+SUM(fact_sales[cogs])
+
+Potential Revenue =
+[Total Revenue] + [Lost Revenue]
+
+Units Sold =
+SUM(fact_sales[qty_sold])
+
+Units Lost =
+SUM(fact_sales[lost_units])
+
+Units Demanded =
+SUM(fact_sales[qty_demanded])
+
+// ── RATE METRICS ──────────────────────────────────────────────────────────────
+
+Stockout Rate % =
+DIVIDE(
+    COUNTROWS(FILTER(fact_sales, fact_sales[is_stockout] = 1)),
+    COUNTROWS(fact_sales),
+    0
+) * 100
+
+Lost Revenue % =
+DIVIDE([Lost Revenue], [Potential Revenue], 0) * 100
+
+Gross Margin % =
+DIVIDE([Gross Profit], [Total Revenue], 0) * 100
+
+Average Discount % =
+AVERAGEX(
+    FILTER(fact_sales, fact_sales[discount_pct] > 0),
+    fact_sales[discount_pct]
+) * 100
+
+// ── TIME INTELLIGENCE ─────────────────────────────────────────────────────────
+
+Revenue MTD =
+CALCULATE(
+    [Total Revenue],
+    DATESMTD(dim_date[date])
+)
+
+Revenue YTD =
+CALCULATE(
+    [Total Revenue],
+    DATESYTD(dim_date[date])
+)
+
+Revenue LY =
+CALCULATE(
+    [Total Revenue],
+    SAMEPERIODLASTYEAR(dim_date[date])
+)
+
+Revenue MoM Growth % =
+VAR CurrentMonth = [Total Revenue]
+VAR PrevMonth = CALCULATE(
+    [Total Revenue],
+    PREVIOUSMONTH(dim_date[date])
+)
+RETURN
+DIVIDE(CurrentMonth - PrevMonth, PrevMonth, 0) * 100
+
+Revenue YoY Growth % =
+DIVIDE(
+    [Total Revenue] - [Revenue LY],
+    [Revenue LY],
+    0
+) * 100
+
+Lost Revenue MTD =
+CALCULATE(
+    [Lost Revenue],
+    DATESMTD(dim_date[date])
+)
+
+Rolling 3M Revenue =
+CALCULATE(
+    [Total Revenue],
+    DATESINPERIOD(dim_date[date], LASTDATE(dim_date[date]), -3, MONTH)
+)
+
+// ── RANKING MEASURES ──────────────────────────────────────────────────────────
+
+Store Revenue Rank =
+RANKX(
+    ALLSELECTED(dim_stores[store_name]),
+    [Total Revenue],
+    ,
+    DESC,
+    DENSE
+)
+
+Category Loss Rank =
+RANKX(
+    ALLSELECTED(dim_products[category]),
+    [Lost Revenue],
+    ,
+    DESC,
+    DENSE
+)
+
+SKU Revenue Rank =
+RANKX(
+    ALLSELECTED(dim_products[product_name]),
+    [Total Revenue],
+    ,
+    DESC,
+    DENSE
+)
+
+// ── ABC ANALYSIS ──────────────────────────────────────────────────────────────
+
+ABC Revenue Share % =
+DIVIDE([Total Revenue],
+    CALCULATE([Total Revenue], ALL(dim_products)),
+    0
+) * 100
+
+Cumulative Revenue % =
+CALCULATE(
+    [Total Revenue],
+    FILTER(
+        ALLSELECTED(dim_products[product_name]),
+        [SKU Revenue Rank] <= EARLIER([SKU Revenue Rank])
+    )
+)
+
+ABC Category =
+VAR CumulativePct = DIVIDE(
+    [Cumulative Revenue %],
+    CALCULATE([Total Revenue], ALL(dim_products)),
+    0
+) * 100
+RETURN
+SWITCH(
+    TRUE(),
+    CumulativePct <= 80, "A — Top 80%",
+    CumulativePct <= 95, "B — Next 15%",
+    "C — Bottom 5%"
+)
+
+// ── INVENTORY METRICS ─────────────────────────────────────────────────────────
+
+Avg Stock Level =
+AVERAGE(dim_inventory[stock_level])
+
+Stores at Stockout Risk =
+CALCULATE(
+    COUNTROWS(dim_inventory),
+    dim_inventory[is_stockout_risk] = 1
+)
+
+Stores Overstocked =
+CALCULATE(
+    COUNTROWS(dim_inventory),
+    dim_inventory[overstock_flag] = 1
+)
+
+Total Inventory Value =
+SUM(dim_inventory[inventory_value])
+
+// ── TARGET vs ACTUAL ──────────────────────────────────────────────────────────
+
+Monthly Revenue per Store =
+DIVIDE([Total Revenue], 18)  // 18 months in dataset
+
+Target Attainment % =
+DIVIDE(
+    [Monthly Revenue per Store],
+    AVERAGE(dim_stores[target_monthly_revenue]),
+    0
+) * 100
+
+Revenue vs Target Gap =
+[Monthly Revenue per Store] - AVERAGE(dim_stores[target_monthly_revenue])
+
+// ── RECOVERY OPPORTUNITY ──────────────────────────────────────────────────────
+
+Recovery Opportunity (Top 20 SKUs) =
+CALCULATE(
+    [Lost Revenue],
+    TOPN(20, dim_products, [Total Revenue], DESC)
+)
+
+Implied Annual Lost Revenue =
+DIVIDE([Lost Revenue], 18) * 12  // Annualized from 18-month dataset
+
+ROI of Fixing Stockouts =
+// If we halve the stockout rate, this is the revenue recovered
+[Implied Annual Lost Revenue] * 0.5
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RECOMMENDED VISUALS IN POWER BI
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// PAGE 1 — Executive Dashboard
+//   KPI Cards: Total Revenue, Lost Revenue, Stockout Rate %, Gross Profit
+//   Line Chart: Revenue MTD vs Lost Revenue MTD (by month, dim_date)
+//   Pie/Donut: Revenue by Region (dim_stores[region])
+//   Bar Chart: Revenue by Category (dim_products[category])
+//
+// PAGE 2 — Stockout Deep Dive
+//   Matrix: Category × Tier → Stockout Rate %
+//   Scatter: Revenue vs Lost Revenue % (by SKU, size=units_lost)
+//   Table: Top 25 Loss-Causing SKUs sorted by Lost Revenue
+//   Bar: Stockout Rate by Day of Week
+//
+// PAGE 3 — Store Performance
+//   Map: Revenue by City (requires Bing Maps or Azure Maps)
+//   Bar: Store Revenue Rank (horizontal)
+//   Table: Target Attainment % by store with conditional formatting
+//   Decomp Tree: Revenue decomposed by Region → Tier → Store
+//
+// PAGE 4 — Inventory Risk
+//   Matrix: SKU × Store → is_stockout_risk
+//   Bar: Top 10 SKUs by Priority Score
+//   Gauge: Avg Stock Level vs Reorder Point
+//   KPI: Stores at Stockout Risk count
+//
+// PAGE 5 — Forecast
+//   Line Chart: Rolling 3M Revenue trend with forecast
+//   Card: Revenue MoM Growth %, Revenue YoY Growth %
+//   Table: ABC Category classification by SKU

@@ -1,0 +1,188 @@
+name: 🚀 Deploy to Azure App Service
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: retail-intelligence-platform   # Change this to your app name
+  PYTHON_VERSION: '3.11'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/retail-intel
+
+jobs:
+  # ── QUALITY GATE ─────────────────────────────────────────────────────────────
+  quality:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install flake8 pytest black
+
+      - name: Lint with flake8
+        run: flake8 scripts/ app.py --max-line-length=120 --ignore=E501,W503 || true
+
+      - name: Check formatting (black)
+        run: black --check --diff scripts/ app.py --line-length 120 || true
+
+      - name: Run data pipeline test
+        run: |
+          python scripts/run_all.py
+          echo "✅ Pipeline completed successfully"
+          ls -la outputs/
+
+  # ── BUILD DOCKER IMAGE ────────────────────────────────────────────────────────
+  build-and-push:
+    name: 🐳 Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: quality
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── DEPLOY TO AZURE ───────────────────────────────────────────────────────────
+  deploy-azure:
+    name: ☁️ Deploy to Azure App Service
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment:
+      name: production
+      url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          # AZURE_CREDENTIALS format:
+          # {
+          #   "clientId": "...",
+          #   "clientSecret": "...",
+          #   "subscriptionId": "...",
+          #   "tenantId": "..."
+          # }
+
+      - name: Deploy to Azure App Service (Container)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Configure App Settings
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az webapp config appsettings set \
+              --name ${{ env.AZURE_WEBAPP_NAME }} \
+              --resource-group retail-intel-rg \
+              --settings \
+                WEBSITES_PORT=8000 \
+                AZURE_SQL_CONNECTION="${{ secrets.AZURE_SQL_CONNECTION }}" \
+                AZURE_STORAGE_CONNECTION="${{ secrets.AZURE_STORAGE_CONNECTION }}" \
+                POWER_BI_WORKSPACE_ID="${{ secrets.POWER_BI_WORKSPACE_ID }}" \
+                POWER_BI_REPORT_ID="${{ secrets.POWER_BI_REPORT_ID }}" \
+                ENVIRONMENT=production
+
+      - name: Health Check
+        run: |
+          echo "Waiting for deployment..."
+          sleep 30
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/_stcore/health)
+          echo "Health check response: $response"
+          if [ "$response" != "200" ]; then
+            echo "❌ Health check failed"
+            exit 1
+          fi
+          echo "✅ Deployment successful!"
+
+      - name: Slack Notification (optional)
+        if: always()
+        run: |
+          echo "Deployment status: ${{ job.status }}"
+          # Add Slack webhook notification here
+
+  # ── UPLOAD TO AZURE BLOB (Power BI source) ───────────────────────────────────
+  upload-powerbi-data:
+    name: 📊 Refresh Power BI Data
+    runs-on: ubuntu-latest
+    needs: quality
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate fresh analytics data
+        run: python scripts/run_all.py
+
+      - name: Upload to Azure Blob Storage
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az storage blob upload-batch \
+              --source outputs/ \
+              --destination powerbi-data \
+              --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION }}" \
+              --overwrite true
+            echo "✅ Power BI data refreshed in Azure Blob Storage"

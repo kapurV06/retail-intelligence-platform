@@ -1,0 +1,13 @@
+store_id,store_name,city,region,tier,size_sqft,opened_year,target_monthly_revenue
+STR-001,Mumbai Premium #1,Mumbai,West,Premium,36479,2015,3431316
+STR-002,Delhi Standard #2,Delhi,North,Standard,36599,2019,1770107
+STR-003,Bangalore Premium #3,Bangalore,South,Premium,33244,2019,2394496
+STR-004,Hyderabad Standard #4,Hyderabad,South,Standard,24693,2010,4457915
+STR-005,Chennai Discount #5,Chennai,South,Discount,8110,2018,2452850
+STR-006,Pune Standard #6,Pune,West,Standard,31869,2016,1386982
+STR-007,Kolkata Discount #7,Kolkata,East,Discount,29639,2019,3433315
+STR-008,Delhi Premium #8,Delhi,North,Premium,16167,2021,3319285
+STR-009,Jaipur Standard #9,Jaipur,North,Standard,41234,2014,4225848
+STR-010,Chandigarh Standard #10,Chandigarh,North,Standard,29376,2016,3280135
+STR-011,Ahmedabad Discount #11,Ahmedabad,West,Discount,44333,2012,2409271
+STR-012,Lucknow Standard #12,Lucknow,Central,Standard,35554,2020,3980501
