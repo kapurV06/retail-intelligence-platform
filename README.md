@@ -26,17 +26,12 @@ This platform answers: **Which SKUs, in which stores, will stock out next — an
 |-------|-----------|---------|
 | **Data Generation** | Python, Faker, NumPy | Realistic synthetic retail dataset |
 | **EDA** | Pandas, SciPy | KPIs, trends, risk matrix, forecasting |
-| **SQL Analytics** | SQLite → Azure SQL | Window functions, CTEs, ABC analysis |
+| **SQL Analytics** | SQLite| Window functions, CTEs, ABC analysis |
 | **Excel Reporting** | openpyxl, xlsxwriter | 7-sheet executive workbook |
 | **Dashboard** | Streamlit + Plotly | 6-page interactive dashboard |
 | **BI** | Power BI Desktop + Service | DAX measures, star schema, embedded reports |
-| **Cloud** | Azure App Service | Containerized deployment |
 | **CI/CD** | GitHub Actions | Automated test → build → deploy |
 | **Container** | Docker | Reproducible, portable deployment |
-| **Secrets** | Azure Key Vault | Connection strings, API keys |
-| **Storage** | Azure Blob Storage | Power BI data source, report cache |
-| **Database** | Azure SQL | Production data store for Power BI DirectQuery |
-
 ---
 
 ## Quick Start
@@ -60,22 +55,6 @@ docker build -t retail-intel .
 docker run -p 8000:8000 retail-intel
 # Open http://localhost:8000
 ```
-
-### Azure Deployment
-```bash
-# 1. Provision infrastructure (one-time)
-bash azure/provision.sh
-
-# 2. Set GitHub Secrets:
-#    AZURE_CREDENTIALS, AZURE_SQL_CONNECTION,
-#    AZURE_STORAGE_CONNECTION, POWER_BI_WORKSPACE_ID
-
-# 3. Push to main → GitHub Actions auto-deploys
-git push origin main
-```
-
----
-
 ## Project Structure
 
 ```
@@ -90,11 +69,7 @@ retail-intelligence-platform/
 │   ├── eda_analysis.py             
 │   ├── sql_analytics.py            
 │   ├── excel_report.py             
-│   └── run_all.py                  
-│
-├── azure/
-│   ├── provision.sh               
-│   └── migrate_to_azure_sql.py     
+│   └── run_all.py                   
 │
 ├── powerbi/
 │   ├── dax_measures.dax            
