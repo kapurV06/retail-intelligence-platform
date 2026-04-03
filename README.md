@@ -2,8 +2,7 @@
 
 > **Solving the $1.75 trillion global stockout crisis with end-to-end data analytics**
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template)
-[![Azure App Service](https://img.shields.io/badge/Azure-App%20Service-0078D4?logo=microsoftazure)](https://azure.microsoft.com)
+
 [![Power BI](https://img.shields.io/badge/Power%20BI-Connected-F2C811?logo=powerbi)](https://powerbi.microsoft.com)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Deployed-FF4B4B?logo=streamlit)](https://streamlit.io)
