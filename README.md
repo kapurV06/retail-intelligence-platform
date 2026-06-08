@@ -1,107 +1,74 @@
 # Retail Inventory Intelligence Platform
 
-> **Solving the $1.75 trillion global stockout crisis with end-to-end data analytics**
+End-to-end retail analytics pipeline — from synthetic data generation to an interactive dashboard and Power BI reports.
 
-
-[![Power BI](https://img.shields.io/badge/Power%20BI-Connected-F2C811?logo=powerbi)](https://powerbi.microsoft.com)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Deployed-FF4B4B?logo=streamlit)](https://streamlit.io)
+The core question: which SKUs are heading toward stockouts, and what's the revenue cost? Built the full stack to answer it: data generation, SQL analytics, an Excel workbook, a Streamlit dashboard, and Power BI on top.
 
 ---
 
-## The Problem
+## What's inside
 
-Retailers globally lose **$1.75 trillion/year** to inventory mismanagement — stockouts that lose sales, and overstocks that tie up capital. Most companies have the data. They just can't act on it fast enough.
+**Data layer** — synthetic retail dataset (18 months, multiple stores and SKUs) generated with realistic demand patterns and seasonal variation.
 
-This platform answers: **Which SKUs, in which stores, will stock out next — and what does it cost us?**
+**Analytics** — Pandas + SciPy for EDA, SQLite with window functions and CTEs for inventory and ABC analysis, `openpyxl` for a 7-sheet executive Excel report.
 
-**Quantified in this dataset:**
-- **₹623M lost** to stockouts across 18 months
-- **9.1% of all demand** goes unmet
-- Top 10 SKUs account for **40% of all lost revenue**
+**Dashboard** — 6-page Streamlit app covering executive overview, category breakdown, store performance, stockout risk, revenue recovery waterfall, and a 3-month demand forecast.
 
-## Tech Stack
+**BI layer** — Power BI reports with DAX measures and a star schema data model.
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Data Generation** | Python, Faker, NumPy | Realistic synthetic retail dataset |
-| **EDA** | Pandas, SciPy | KPIs, trends, risk matrix, forecasting |
-| **SQL Analytics** | SQLite| Window functions, CTEs, ABC analysis |
-| **Excel Reporting** | openpyxl, xlsxwriter | 7-sheet executive workbook |
-| **Dashboard** | Streamlit + Plotly | 6-page interactive dashboard |
-| **BI** | Power BI Desktop + Service | DAX measures, star schema, embedded reports |
-| **CI/CD** | GitHub Actions | Automated test → build → deploy |
-| **Container** | Docker | Reproducible, portable deployment |
+**Infra** — Dockerized, CI/CD via GitHub Actions.
+
 ---
 
-## Quick Start
+## Stack
 
-### Local Development
+`Python` · `Pandas` · `SciPy` · `SQLite` · `Plotly` · `Streamlit` · `Power BI` · `openpyxl` · `Docker` · `GitHub Actions`
+
+---
+
+## Run it
+
 ```bash
-git clone https://github.com/yourname/retail-intelligence-platform
+git clone https://github.com/kapurV06/retail-intelligence-platform
 cd retail-intelligence-platform
 pip install -r requirements.txt
 
-# Generate data + run full pipeline
+# Generate data and run the full pipeline
 python scripts/run_all.py
 
 # Launch dashboard
 streamlit run app.py
 ```
 
-### Docker
+Or with Docker:
+
 ```bash
 docker build -t retail-intel .
 docker run -p 8000:8000 retail-intel
-# Open http://localhost:8000
 ```
-## Project Structure
+
+---
+
+## Structure
 
 ```
 retail-intelligence-platform/
-│
-├── app.py                          
-├── Dockerfile                      
+├── app.py                        # Streamlit dashboard
+├── Dockerfile
 ├── requirements.txt
-│
 ├── scripts/
-│   ├── generate_data.py            
-│   ├── eda_analysis.py             
-│   ├── sql_analytics.py            
-│   ├── excel_report.py             
-│   └── run_all.py                   
-│
+│   ├── generate_data.py
+│   ├── eda_analysis.py
+│   ├── sql_analytics.py
+│   ├── excel_report.py
+│   └── run_all.py
 ├── powerbi/
-│   ├── dax_measures.dax            
-│   └── DATA_MODEL.md               
-│
-├── .github/
-│   └── workflows/
-│       └── azure-deploy.yml        
-│
-├── data/                           
+│   ├── dax_measures.dax
+│   └── DATA_MODEL.md
+├── .github/workflows/
+├── data/
 └── outputs/
-    ├── retail.db                   
-    ├── analytics_cache.json        
-    └── Retail_Intelligence_Report.xlsx  
+    ├── retail.db
+    ├── analytics_cache.json
+    └── Retail_Intelligence_Report.xlsx
 ```
-
----
-
-## Dashboard Pages
-
-1. **Executive Overview** — Revenue trend, MoM growth, regional breakdown
-2. **Category Deep Dive** — Margin analysis, revenue vs loss scatter, weekday heatmap
-3. **Store Performance** — Leaderboard, target attainment, tier comparison
-4. **Stockout Risk** — Chronic SKUs, loss funnel, trend analysis
-5. **Revenue Recovery** — Waterfall chart, priority matrix, action table
-6. **Demand Forecast** — Historical trend + 3-month projection, inventory risk
-
----
-
-## 💡 Business Impact
-
-If stockout rate is reduced from **9.1% → 4.5%** :
-- **Annual revenue recovery: ~₹415M**
-- **Top 10 SKU fix: ~₹250M alone**
-- **ROI timeline: 3–6 months** (technology cost vs revenue gain)
