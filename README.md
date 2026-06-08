@@ -16,7 +16,7 @@ The core question: which SKUs are heading toward stockouts, and what's the reven
 
 **BI layer** — Power BI reports with DAX measures and a star schema data model.
 
-**Infra** — Dockerized, CI/CD via GitHub Actions.
+**Infra** — Dockerized, CI/CD via GitHub Actions for automated testing and builds.
 
 ---
 
@@ -65,7 +65,7 @@ retail-intelligence-platform/
 ├── powerbi/
 │   ├── dax_measures.dax
 │   └── DATA_MODEL.md
-├── .github/workflows/
+├── .github/workflows/              # CI/CD pipeline
 ├── data/
 └── outputs/
     ├── retail.db
